@@ -242,3 +242,5 @@ Key UI capabilities:
 - Use `ScoreCalculator.from_config_file(...)` to customize weighting without editing source.
 - Use `ReportGenerator` to add new output formats or visualizations.
 - The evaluator already processes transcripts one file at a time and can be adapted for parallel execution later.
+
+Hope you all find it useful to upskill your prompting skills!!
