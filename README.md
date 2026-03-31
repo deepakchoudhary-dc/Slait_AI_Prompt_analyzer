@@ -220,7 +220,7 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 Install optional UI dependency:
 
 ```bash
-pip install -r requirements-ui.txt
+pip install -r requirements.txt
 ```
 
 Run the interactive dashboard:
