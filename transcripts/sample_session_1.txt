@@ -1,0 +1,25 @@
+[2026-03-29T09:00:00Z] User: I need a Python function to reverse a string safely.
+[2026-03-29T09:00:08Z] AI: Here is a safe implementation:
+```python
+def reverse_string(value: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError("value must be a string")
+    return value[::-1]
+```
+[2026-03-29T09:00:20Z] User: Good start. Now add tests.
+[2026-03-29T09:00:35Z] AI: Great idea. You can test with:
+```python
+def test_reverse_string():
+    assert reverse_string("abc") == "cba"
+```
+[2026-03-29T09:01:00Z] User: This fails on None input. Fix this.
+[2026-03-29T09:01:18Z] AI: Updated implementation:
+```python
+def reverse_string(value: str) -> str:
+    if value is None:
+        raise TypeError("value cannot be None")
+    if not isinstance(value, str):
+        raise TypeError("value must be a string")
+    return value[::-1]
+```
+[2026-03-29T09:01:35Z] User: Perfect, thanks.

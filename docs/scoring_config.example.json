@@ -1,0 +1,8 @@
+{
+  "weights": {
+    "security_hygiene": 0.25,
+    "code_quality": 0.12,
+    "context_retention": 0.1,
+    "turn_balance": 0.06
+  }
+}

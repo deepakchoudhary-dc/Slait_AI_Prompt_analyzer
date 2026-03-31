@@ -1,0 +1,39 @@
+{
+  "messages": [
+    {
+      "timestamp": "2026-03-30T12:00:00Z",
+      "speaker": "User",
+      "message": "Let's design a CLI for transcript evaluation. Start with architecture."
+    },
+    {
+      "timestamp": "2026-03-30T12:00:15Z",
+      "speaker": "AI",
+      "content": "Planning outline:\n1) parser\n2) metrics engine\n3) reporting"
+    },
+    {
+      "timestamp": "2026-03-30T12:00:33Z",
+      "speaker": "User",
+      "content": "Now implement the parser in Python."
+    },
+    {
+      "timestamp": "2026-03-30T12:00:50Z",
+      "speaker": "Assistant",
+      "content": "```python\nclass TranscriptParser:\n    def parse(self, payload):\n        return payload\n```"
+    },
+    {
+      "timestamp": "2026-03-30T12:01:09Z",
+      "speaker": "User",
+      "content": "Not quite. Add role normalization and code extraction."
+    },
+    {
+      "timestamp": "2026-03-30T12:01:28Z",
+      "speaker": "AI",
+      "content": "```python\nclass TranscriptParser:\n    def normalize_role(self, role: str) -> str:\n        role = role.lower()\n        if role in {\"assistant\", \"ai\"}:\n            return \"AI\"\n        if role in {\"user\", \"human\"}:\n            return \"User\"\n        return \"Unknown\"\n```"
+    },
+    {
+      "timestamp": "2026-03-30T12:01:42Z",
+      "speaker": "User",
+      "content": "Great. Add debugging notes and tests next."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# Core CLI and evaluation engine intentionally use Python standard library only.
+# Install optional frontend dependencies from requirements-ui.txt.
+# Streamlit frontend dependency (vetted and pinned).
+# Security advisory baseline reviewed:
+# - GHSA-7p48-42j8-8846 (patched in >=1.54.0)
+# - GHSA-rxff-vr5r-8cj5 (patched in >=1.37.0)
+# - GHSA-9c6g-qpgj-rvxw (patched in >=0.81.0)
+streamlit==1.55.0
