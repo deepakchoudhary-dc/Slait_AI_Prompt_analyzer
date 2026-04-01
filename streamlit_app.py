@@ -445,6 +445,19 @@ def _scores_table(result: Dict[str, object]) -> List[Dict[str, object]]:
     return sorted(rows, key=lambda item: float(item.get("score") or 0), reverse=True)
 
 
+@st.cache_resource
+def _build_evaluator(strip_sensitive: bool, keep_system_messages: bool, enable_phase_detection: bool) -> WorkflowEvaluator:
+    return WorkflowEvaluator(
+        parser=TranscriptParser(
+            remove_system_messages=not keep_system_messages,
+            strip_sensitive=strip_sensitive,
+        ),
+        phase_detector=PhaseDetector(enabled=enable_phase_detection),
+        metrics_engine=MetricsEngine(),
+        score_calculator=ScoreCalculator(),
+    )
+
+
 def _build_report(paths: List[Path], strip_sensitive: bool, keep_system_messages: bool, enable_phase_detection: bool) -> Dict[str, object]:
     evaluator = _build_evaluator(strip_sensitive, keep_system_messages, enable_phase_detection)
     evaluations = evaluator.evaluate_files(paths)
