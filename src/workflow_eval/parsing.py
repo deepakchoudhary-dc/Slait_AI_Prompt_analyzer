@@ -8,7 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from .models import Transcript, Turn
 
 SPEAKER_LINE_PATTERN = re.compile(
-    r"^\s*(?:\[(?P<timestamp>[^\]]+)\]\s*)?(?P<speaker>User|Human|Developer|Assistant|AI|Copilot|Claude|ChatGPT|System|Tool)\s*[:\-]\s*(?P<content>.*)$",
+    r"^\s*(?:\[(?P<timestamp>[^\]]+)\]\s*)?(?P<speaker>[a-zA-Z0-9_\-\s]{2,30}?)\s*[:\-]\s*(?P<content>.*)$",
     re.IGNORECASE,
 )
 CODE_BLOCK_PATTERN = re.compile(
@@ -138,56 +138,48 @@ class TranscriptParser:
                 for msg in messages:
                     yield self._to_turn(msg, index)
 
-    def _parse_text_file(self, path: Path) -> List[Turn]:
+    def _parse_text_file(self, path: Path) -> Iterable[Turn]:
         with path.open("r", encoding="utf-8", errors="replace") as handle:
-            return self._parse_text_lines(handle)
+            yield from self._parse_text_lines(handle)
 
-    def _parse_text_lines(self, lines: Iterable[str]) -> List[Turn]:
-        turns: List[Turn] = []
+    def _parse_text_lines(self, lines: Iterable[str]) -> Iterable[Turn]:
         current_speaker: Optional[str] = None
         current_timestamp: Optional[str] = None
         buffer: List[str] = []
         fallback_lines: List[str] = []
-
+        
+        has_turns = False
         for raw_line in lines:
             line = raw_line.rstrip("\n").rstrip("\r")
             fallback_lines.append(line)
             match = SPEAKER_LINE_PATTERN.match(line)
             if match:
                 if current_speaker is not None:
-                    turns.append(
-                        Turn(
-                            speaker=current_speaker,
-                            content="\n".join(buffer).strip(),
-                            timestamp=current_timestamp,
-                        )
+                    has_turns = True
+                    yield Turn(
+                        speaker=current_speaker,
+                        content="\n".join(buffer).strip(),
+                        timestamp=current_timestamp,
                     )
-
                 current_speaker = match.group("speaker")
                 current_timestamp = match.group("timestamp")
                 buffer = [match.group("content")]
                 continue
-
-            if current_speaker is None:
-                continue
-
-            buffer.append(line)
-
+            if current_speaker is not None:
+                buffer.append(line)
+                
         if current_speaker is not None:
-            turns.append(
-                Turn(
-                    speaker=current_speaker,
-                    content="\n".join(buffer).strip(),
-                    timestamp=current_timestamp,
-                )
+            has_turns = True
+            yield Turn(
+                speaker=current_speaker,
+                content="\n".join(buffer).strip(),
+                timestamp=current_timestamp,
             )
-
-        if not turns:
+            
+        if not has_turns:
             raw_content = "\n".join(fallback_lines).strip()
             if raw_content:
-                return [Turn(speaker="Unknown", content=raw_content)]
-
-        return turns
+                yield Turn(speaker="Unknown", content=raw_content)
 
     def _extract_messages(self, payload: Any) -> Iterable[Any]:
         if isinstance(payload, list):
