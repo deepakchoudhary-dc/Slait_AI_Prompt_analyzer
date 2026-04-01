@@ -1,7 +1,30 @@
 from __future__ import annotations
 
 import json
+
+class SchemaValidator:
+    """Strict JSON Contracts mapping."""
+    @staticmethod
+    def validate_payload(payload):
+        if not isinstance(payload, (dict, list)):
+            raise ValueError("Root payload must be an object or an array.")
+        
+    @staticmethod
+    def validate_message(msg):
+        if not isinstance(msg, dict):
+            raise ValueError("Each message must be a JSON object.")
+        if "role" not in msg and "speaker" not in msg:
+            raise ValueError("Schema Violation: missing 'role' or 'speaker' in message.")
+        if "content" not in msg and "text" not in msg:
+            raise ValueError("Schema Violation: missing 'content' or 'text' in message.")
+        if "role" in msg and not isinstance(msg["role"], str):
+            raise ValueError("Schema Violation: 'role' must be string.")
+        if "content" in msg and not isinstance(msg.get("content", ""), (str, list, dict)):
+            raise ValueError("Schema Violation: 'content' format unsupported.")
+
+
 import re
+
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -114,6 +137,8 @@ class TranscriptParser:
         try:
             with path.open("r", encoding="utf-8", errors="replace") as handle:
                 payload = json.load(handle)
+            SchemaValidator.validate_payload(payload)
+            SchemaValidator.validate_payload(payload)
         except json.JSONDecodeError as exc:
             raise ValueError(f"Invalid JSON transcript: {exc}") from exc
 
@@ -131,6 +156,8 @@ class TranscriptParser:
                     continue
                 try:
                     payload = json.loads(line)
+                    SchemaValidator.validate_payload(payload)
+                    SchemaValidator.validate_payload(payload)
                 except json.JSONDecodeError as exc:
                     raise ValueError(f"Invalid JSONL transcript at line {index}: {exc}") from exc
                 
@@ -232,6 +259,7 @@ class TranscriptParser:
         )
 
     def _to_turn(self, message: Any, index: int) -> Turn:
+        SchemaValidator.validate_message(message)
         if isinstance(message, str):
             return Turn(speaker="Unknown", content=message)
 

@@ -130,5 +130,55 @@ AI: Token is ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456
                 parser.parse_file(path)
 
 
+
+    def test_schema_violation_missing_fields(self) -> None:
+        payload = {"messages": [{"foo": "bar"}]}
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "broken.json"
+            import json
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            parser = TranscriptParser()
+            with self.assertRaisesRegex(ValueError, "did not contain parseable turns|Schema Violation"):
+                parser.parse_file(path)
+
+    def test_schema_violation_invalid_role(self) -> None:
+        payload = {"messages": [{"role": 123, "content": "hello"}]}
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "broken2.json"
+            import json
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            parser = TranscriptParser()
+            with self.assertRaisesRegex(ValueError, "did not contain parseable turns|Schema Violation"):
+                parser.parse_file(path)
+
+
+    def test_schema_violation_missing_fields(self) -> None:
+        payload = {"messages": [{"foo": "bar"}]}
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "broken.json"
+            import json
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            parser = TranscriptParser()
+            with self.assertRaisesRegex(ValueError, "did not contain parseable turns|Schema Violation"):
+                parser.parse_file(path)
+
+    def test_schema_violation_invalid_role(self) -> None:
+        payload = {"messages": [{"role": 123, "content": "hello"}]}
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "broken2.json"
+            import json
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            parser = TranscriptParser()
+            with self.assertRaisesRegex(ValueError, "did not contain parseable turns|Schema Violation"):
+                parser.parse_file(path)
+
 if __name__ == "__main__":
     unittest.main()

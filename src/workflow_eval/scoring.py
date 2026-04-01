@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
+
+@dataclass(frozen=True)
+class ScoringConstants:
+    CLAMP_MIN: float = 0.0
+    CLAMP_MAX: float = 100.0
+
+C = ScoringConstants()
+
 from typing import Any, Dict, List, Optional, Tuple
 
 from .models import MetricScore
 
 
-def _clamp(value: float, lower: float = 0.0, upper: float = 100.0) -> float:
+def _clamp(value: float, lower: float = C.CLAMP_MIN, upper: float = C.CLAMP_MAX) -> float:
     return max(lower, min(upper, value))
 
 
@@ -29,14 +38,14 @@ class ScoreCalculator:
         "security_hygiene": 0.18,
     }
 
-    def __init__(self, weights: Optional[Dict[str, float]] = None) -> None:
+    def __init__(self, weights: Optional[Dict[str, float]] = None) -> None:     
         self.weights = self._resolve_weights(weights or {})
 
     @classmethod
     def from_config_file(cls, path: Path) -> "ScoreCalculator":
         payload = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
-            raise ValueError("Score configuration must be a JSON object.")
+            raise ValueError("Score configuration must be a JSON object.")      
 
         weight_payload = payload.get("weights", payload)
         if not isinstance(weight_payload, dict):
@@ -54,13 +63,13 @@ class ScoreCalculator:
     def _resolve_weights(self, overrides: Dict[str, float]) -> Dict[str, float]:
         unknown = sorted(set(overrides).difference(self.DEFAULT_WEIGHTS))
         if unknown:
-            raise ValueError(f"Unknown score weights: {', '.join(unknown)}")
+            raise ValueError(f"Unknown score weights: {', '.join(unknown)}")    
 
         merged = dict(self.DEFAULT_WEIGHTS)
         merged.update(overrides)
         total = sum(weight for weight in merged.values() if weight > 0)
         if total <= 0:
-            raise ValueError("Score weights must sum to a positive value.")
+            raise ValueError("Score weights must sum to a positive value.")     
 
         return {
             name: (max(weight, 0.0) / total)
@@ -102,7 +111,7 @@ class ScoreCalculator:
             rationale="Frequent correction prompts often indicate low first-pass utility.",
         )
 
-        # 3) Suggestion acceptance reflects whether AI outputs are usable.
+        # 3) Suggestion acceptance reflects whether AI outputs are usable.      
         acceptance_rate = metrics.get("acceptance_rate")
         if acceptance_rate is None:
             suggestion_acceptance = MetricScore(
@@ -115,19 +124,19 @@ class ScoreCalculator:
             suggestion_acceptance = MetricScore(
                 value=acceptance_rate,
                 score=_clamp(float(acceptance_rate) * 100.0),
-                confidence=_clamp(50.0 + min(ai_suggestions, 20) * 2.0),
+                confidence=_clamp(50.0 + min(ai_suggestions, 20) * 2.0),        
                 rationale="Higher acceptance usually indicates outputs are aligned with developer intent.",
             )
         scores["suggestion_acceptance"] = suggestion_acceptance
 
         # 4) Some positive feedback is a useful signal, but excessive praise is neutralized.
-        feedback_ratio = float(metrics.get("positive_feedback_ratio", 0.0))
+        feedback_ratio = float(metrics.get("positive_feedback_ratio", 0.0))     
         if feedback_ratio == 0 and user_turns > 0:
             feedback_score = 40.0
         elif feedback_ratio <= 0.35:
             feedback_score = _clamp((feedback_ratio / 0.35) * 100.0)
         else:
-            feedback_score = _clamp(100.0 - (feedback_ratio - 0.35) * 180.0)
+            feedback_score = _clamp(100.0 - (feedback_ratio - 0.35) * 180.0)    
 
         scores["feedback_quality"] = MetricScore(
             value=feedback_ratio,
@@ -136,14 +145,14 @@ class ScoreCalculator:
             rationale="Measured acknowledgements are treated as a weak success proxy.",
         )
 
-        # 5) Balanced code/discussion turns generally indicate healthy flow.
+        # 5) Balanced code/discussion turns generally indicate healthy flow.    
         code_ratio = float(metrics.get("code_turn_ratio", 0.0))
         if code_ratio < 0.30:
             code_balance_score = _clamp((code_ratio / 0.30) * 100.0)
         elif code_ratio <= 0.75:
             code_balance_score = 100.0
         else:
-            code_balance_score = _clamp(100.0 - (code_ratio - 0.75) * 300.0)
+            code_balance_score = _clamp(100.0 - (code_ratio - 0.75) * 300.0)    
 
         scores["code_discussion_balance"] = MetricScore(
             value=code_ratio,
@@ -170,7 +179,7 @@ class ScoreCalculator:
         )
 
         # 7) Penalize very short or excessively verbose prompts.
-        avg_prompt_words = float(metrics.get("avg_user_prompt_words", 0.0))
+        avg_prompt_words = float(metrics.get("avg_user_prompt_words", 0.0))     
         if avg_prompt_words == 0:
             prompt_score = 50.0
             prompt_confidence = 40.0
@@ -181,7 +190,7 @@ class ScoreCalculator:
             prompt_score = 100.0
             prompt_confidence = 80.0
         elif avg_prompt_words <= 120:
-            prompt_score = _clamp(100.0 - (avg_prompt_words - 60.0) * 1.2)
+            prompt_score = _clamp(100.0 - (avg_prompt_words - 60.0) * 1.2)      
             prompt_confidence = 80.0
         else:
             prompt_score = 25.0
@@ -194,8 +203,8 @@ class ScoreCalculator:
             rationale="Concise but explicit prompts tend to improve assistant reliability.",
         )
 
-        # 8) Track explicit tooling activity (neutral-to-positive signal).
-        tool_call_turn_count = int(metrics.get("tool_call_turn_count", 0))
+        # 8) Track explicit tooling activity (neutral-to-positive signal).      
+        tool_call_turn_count = int(metrics.get("tool_call_turn_count", 0))      
         observability_score = 70.0 if tool_call_turn_count == 0 else _clamp(70.0 + min(tool_call_turn_count, 5) * 6.0)
         scores["observability"] = MetricScore(
             value=tool_call_turn_count,
@@ -205,7 +214,7 @@ class ScoreCalculator:
         )
 
         # 9) Context retention from user intent to AI responses.
-        context_retention = float(metrics.get("context_retention_score", 0.0))
+        context_retention = float(metrics.get("context_retention_score", 0.0))  
         scores["context_retention"] = MetricScore(
             value=context_retention,
             score=_clamp(context_retention),
@@ -213,9 +222,9 @@ class ScoreCalculator:
             rationale="Higher lexical overlap across turn pairs indicates stronger intent retention.",
         )
 
-        # 10) Penalize excessive phase thrashing and workflow loopbacks.
-        phase_switch_rate = float(metrics.get("phase_switch_rate", 0.0))
-        phase_loopback_count = int(metrics.get("phase_loopback_count", 0))
+        # 10) Penalize excessive phase thrashing and workflow loopbacks.        
+        phase_switch_rate = float(metrics.get("phase_switch_rate", 0.0))        
+        phase_loopback_count = int(metrics.get("phase_loopback_count", 0))      
         phase_stability_score = _clamp(100.0 - (phase_switch_rate * 70.0) - (phase_loopback_count * 5.0))
         scores["phase_stability"] = MetricScore(
             value={"phase_switch_rate": phase_switch_rate, "phase_loopback_count": phase_loopback_count},
@@ -269,8 +278,8 @@ class ScoreCalculator:
         )
 
         # 12) Security hygiene strongly weighted in the global score.
-        security_risk_count = int(metrics.get("security_risk_count", 0))
-        secret_exposure_count = int(metrics.get("secret_exposure_count", 0))
+        security_risk_count = int(metrics.get("security_risk_count", 0))        
+        secret_exposure_count = int(metrics.get("secret_exposure_count", 0))    
         insecure_dependency_mention_count = int(metrics.get("insecure_dependency_mention_count", 0))
         security_discussion_count = int(metrics.get("security_discussion_count", 0))
 
@@ -300,7 +309,7 @@ class ScoreCalculator:
             weighted_score += metric.score * weight
             weighted_confidence += metric.confidence * weight
 
-        return scores, round(weighted_score, 2), round(weighted_confidence, 2)
+        return scores, round(weighted_score, 2), round(weighted_confidence, 2)  
 
     def recommendations(self, metrics: Dict[str, Any], scores: Dict[str, MetricScore]) -> List[str]:
         output: List[str] = []
@@ -316,7 +325,7 @@ class ScoreCalculator:
             )
 
         acceptance_rate = metrics.get("acceptance_rate")
-        if acceptance_rate is not None and float(acceptance_rate) < 0.4:
+        if acceptance_rate is not None and float(acceptance_rate) < 0.4:        
             output.append(
                 "Increase prompt precision with explicit constraints and acceptance tests to improve first-pass acceptance."
             )

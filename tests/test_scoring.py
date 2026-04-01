@@ -43,3 +43,7 @@ class ScoreCalculatorTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    def test_score_constants_are_used(self) -> None:
+        from workflow_eval.scoring import C
+        self.assertEqual(C.TURN_RATIO_IDEAL, 1.0)
+        self.assertEqual(C.CODE_RATIO_LOW, 0.30)
